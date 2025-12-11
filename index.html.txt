@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Deadlock Prevention Toolkit</title>
+</head>
+<body>
+
+<h1>Deadlock Prevention Toolkit</h1>
+<p>
+This project demonstrates how operating systems prevent deadlocks
+using concepts like safe state and resource allocation.
+</p>
+
+</body>
+</html>

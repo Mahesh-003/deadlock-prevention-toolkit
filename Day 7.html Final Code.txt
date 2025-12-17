@@ -148,10 +148,10 @@ prevent deadlocks by checking system safety before resource allocation.
 <h2>Live Deadlock Prevention Simulation</h2>
 
 Processes:
-<input type="number" id="proc" value="3" min="1">
+<input type="number" id="proc" value="0" min="1">
 
 Resources:
-<input type="number" id="res" value="3" min="1">
+<input type="number" id="res" value="0" min="1">
 
 <br>
 <button onclick="createTables()">Generate System</button>
@@ -243,3 +243,4 @@ function checkSafety(){
 
 </body>
 </html>
+

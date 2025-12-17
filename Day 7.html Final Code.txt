@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deadlock Prevention Toolkit</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root{
+  --primary:#00e5ff;
+  --success:#00e676;
+  --danger:#ff5252;
+  --bg:#0f172a;
+  --glass:rgba(255,255,255,0.08);
+}
+
+*{box-sizing:border-box;font-family:Segoe UI,sans-serif}
+
+body{
+  margin:0;
+  background:linear-gradient(120deg,#020617,#0f172a);
+  color:#fff;
+}
+
+/* HEADER */
+header{
+  text-align:center;
+  padding:60px 20px;
+}
+header h1{
+  font-size:40px;
+  background:linear-gradient(to right,var(--primary),#7c4dff);
+  -webkit-background-clip:text;
+  color:transparent;
+}
+header p{
+  max-width:700px;
+  margin:15px auto;
+  opacity:0.85;
+}
+
+/* SECTIONS */
+section{
+  max-width:1100px;
+  margin:30px auto;
+  padding:30px;
+  background:var(--glass);
+  border-radius:16px;
+  backdrop-filter:blur(12px);
+  box-shadow:0 10px 40px rgba(0,0,0,0.4);
+  animation:slideUp 0.8s ease;
+}
+h2{
+  color:var(--primary);
+  margin-bottom:20px;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:20px;
+}
+.card{
+  padding:20px;
+  background:rgba(255,255,255,0.05);
+  border-radius:12px;
+  transition:0.3s;
+}
+.card:hover{
+  transform:translateY(-6px);
+  background:rgba(255,255,255,0.12);
+}
+
+/* FORM */
+input{
+  width:70px;
+  padding:6px;
+  border:none;
+  border-radius:6px;
+}
+button{
+  background:linear-gradient(to right,var(--primary),#7c4dff);
+  border:none;
+  padding:10px 18px;
+  border-radius:30px;
+  cursor:pointer;
+  font-weight:600;
+  margin:10px 0;
+}
+button:hover{opacity:0.85}
+
+/* TABLE */
+table{
+  border-collapse:collapse;
+  margin:10px 0;
+}
+td{
+  border:1px solid rgba(255,255,255,0.3);
+  padding:4px;
+}
+
+/* OUTPUT */
+pre{
+  background:#020617;
+  padding:15px;
+  border-radius:12px;
+  border-left:5px solid var(--primary);
+  min-height:60px;
+}
+
+/* ANIMATION */
+@keyframes slideUp{
+  from{transform:translateY(30px);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+
+footer{
+  text-align:center;
+  opacity:0.6;
+  padding:30px;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>Deadlock Prevention Toolkit</h1>
+<p>
+A modern interactive system that simulates how operating systems
+prevent deadlocks by checking system safety before resource allocation.
+</p>
+</header>
+
+<section>
+<h2>Purpose</h2>
+<div class="grid">
+  <div class="card">Prevents unsafe allocations</div>
+  <div class="card">Implements Banker’s Algorithm</div>
+  <div class="card">Blocks deadlock before it happens</div>
+  <div class="card">Visual & real-time analysis</div>
+</div>
+</section>
+
+<section>
+<h2>Live Deadlock Prevention Simulation</h2>
+
+Processes:
+<input type="number" id="proc" value="3" min="1">
+
+Resources:
+<input type="number" id="res" value="3" min="1">
+
+<br>
+<button onclick="createTables()">Generate System</button>
+
+<div id="tables"></div>
+
+<button onclick="checkSafety()">Check System Safety</button>
+
+<pre id="output">Waiting for input...</pre>
+</section>
+
+<footer>
+This toolkit demonstrates proactive deadlock prevention logic
+</footer>
+
+<script>
+function createTables(){
+  const p = parseInt(document.getElementById("proc").value);
+  const r = parseInt(document.getElementById("res").value);
+  let html = "<h3>Allocation</h3>"+createMatrix("alloc",p,r);
+  html += "<h3>Maximum</h3>"+createMatrix("max",p,r);
+  html += "<h3>Available</h3>"+createRow("avail",r);
+  document.getElementById("tables").innerHTML = html;
+}
+
+function createMatrix(prefix,p,r){
+  let t="<table>";
+  for(let i=0;i<p;i++){
+    t+="<tr>";
+    for(let j=0;j<r;j++)
+      t+=`<td><input type='number' value='0' id='${prefix}-${i}-${j}'></td>`;
+    t+="</tr>";
+  }
+  return t+"</table>";
+}
+
+function createRow(prefix,r){
+  let t="<table><tr>";
+  for(let j=0;j<r;j++)
+    t+=`<td><input type='number' value='0' id='${prefix}-${j}'></td>`;
+  return t+"</tr></table>";
+}
+
+function checkSafety(){
+  const p = parseInt(document.getElementById("proc").value);
+  const r = parseInt(document.getElementById("res").value);
+
+  let alloc=[], max=[], need=[], avail=[], finish=[];
+  for(let i=0;i<p;i++){
+    alloc[i]=[]; max[i]=[]; need[i]=[]; finish[i]=false;
+    for(let j=0;j<r;j++){
+      alloc[i][j]=+document.getElementById(`alloc-${i}-${j}`).value;
+      max[i][j]=+document.getElementById(`max-${i}-${j}`).value;
+      need[i][j]=max[i][j]-alloc[i][j];
+    }
+  }
+  for(let j=0;j<r;j++)
+    avail[j]=+document.getElementById(`avail-${j}`).value;
+
+  let work=[...avail], seq=[], count=0;
+  while(count<p){
+    let found=false;
+    for(let i=0;i<p;i++){
+      if(!finish[i]){
+        let ok=true;
+        for(let j=0;j<r;j++)
+          if(need[i][j]>work[j]) ok=false;
+        if(ok){
+          for(let j=0;j<r;j++) work[j]+=alloc[i][j];
+          finish[i]=true;
+          seq.push("P"+i);
+          count++; found=true;
+        }
+      }
+    }
+    if(!found) break;
+  }
+
+  const out=document.getElementById("output");
+  if(seq.length===p){
+    out.style.borderLeftColor="var(--success)";
+    out.textContent="✅ SAFE STATE\nSafe Sequence: "+seq.join(" → ");
+  }else{
+    out.style.borderLeftColor="var(--danger)";
+    out.textContent="❌ UNSAFE STATE\nAllocation prevented to avoid deadlock";
+  }
+}
+</script>
+
+</body>
+</html>
